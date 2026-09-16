@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../services/session_service.dart';
+import '../auth/login_screen.dart';
+
 class TenantHome extends StatefulWidget {
   final Map<String, dynamic> data;
 
@@ -89,14 +92,31 @@ class _TenantHomeState extends State<TenantHome> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Hello,',
-          style: TextStyle(
-            fontSize: 17,
-            color: Color(0xFF6B7280),
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Expanded(
+              child: Text(
+                'Hello,',
+                style: TextStyle(
+                  fontSize: 17,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
+            ),
+
+            IconButton(
+              tooltip: 'Logout',
+              onPressed: _logout,
+              icon: const Icon(
+                Icons.logout_outlined,
+              ),
+            ),
+          ],
         ),
+
         const SizedBox(height: 2),
+
         Text(
           '${data['name']} 👋',
           style: const TextStyle(
@@ -105,7 +125,9 @@ class _TenantHomeState extends State<TenantHome> {
             color: Color(0xFF111827),
           ),
         ),
+
         const SizedBox(height: 8),
+
         Row(
           children: [
             const Icon(
@@ -113,7 +135,9 @@ class _TenantHomeState extends State<TenantHome> {
               size: 18,
               color: Color(0xFF6B7280),
             ),
+
             const SizedBox(width: 6),
+
             Text(
               '${data['property']} • ${data['unit']}',
               style: const TextStyle(
@@ -170,7 +194,9 @@ class _TenantHomeState extends State<TenantHome> {
                 _statusBadge(
                   latestPayment['status'] ?? 'Unknown',
                 ),
+
                 const SizedBox(width: 10),
+
                 Text(
                   latestPayment['paymentDate'] ?? '',
                   style: const TextStyle(
@@ -210,7 +236,8 @@ class _TenantHomeState extends State<TenantHome> {
             const SizedBox(height: 12),
 
             ...payments.map(
-              (payment) => _buildPaymentHistoryItem(payment),
+              (payment) =>
+                  _buildPaymentHistoryItem(payment),
             ),
           ],
         ],
@@ -235,7 +262,8 @@ class _TenantHomeState extends State<TenantHome> {
             height: 42,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius:
+                  BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.receipt_long_outlined,
@@ -247,7 +275,8 @@ class _TenantHomeState extends State<TenantHome> {
 
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 Text(
                   '${payment['month']} ${payment['year']}',
@@ -256,7 +285,9 @@ class _TenantHomeState extends State<TenantHome> {
                     fontSize: 15,
                   ),
                 ),
+
                 const SizedBox(height: 3),
+
                 Text(
                   'Rent ₹${_formatAmount(payment['rent'])}  •  '
                   'Electricity ₹${_formatAmount(payment['electricity'])}',
@@ -270,7 +301,8 @@ class _TenantHomeState extends State<TenantHome> {
           ),
 
           Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment:
+                CrossAxisAlignment.end,
             children: [
               Text(
                 '₹${_formatAmount(payment['total'])}',
@@ -279,7 +311,9 @@ class _TenantHomeState extends State<TenantHome> {
                   fontSize: 15,
                 ),
               ),
+
               const SizedBox(height: 3),
+
               _statusBadge(
                 payment['status'] ?? 'Unknown',
                 small: true,
@@ -305,7 +339,8 @@ class _TenantHomeState extends State<TenantHome> {
         });
       },
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
           const Text(
             '⚡  ELECTRICITY',
@@ -327,7 +362,8 @@ class _TenantHomeState extends State<TenantHome> {
             )
           else
             ...appliances.map(
-              (appliance) => _buildApplianceItem(appliance),
+              (appliance) =>
+                  _buildApplianceItem(appliance),
             ),
 
           const SizedBox(height: 24),
@@ -359,7 +395,8 @@ class _TenantHomeState extends State<TenantHome> {
   Widget _buildApplianceItem(
     Map<String, dynamic> appliance,
   ) {
-    final status = appliance['status'] ?? 'Unknown';
+    final status =
+        appliance['status'] ?? 'Unknown';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -392,17 +429,24 @@ class _TenantHomeState extends State<TenantHome> {
   Widget _buildWaterStatus(
     Map<String, dynamic> water,
   ) {
-    final status = water['status'] ?? 'Unknown';
+    final status =
+        water['status'] ?? 'Unknown';
+
     final note = water['note'] ?? '';
-    final updatedAt = water['updatedAt'] ?? '';
+
+    final updatedAt =
+        water['updatedAt'] ?? '';
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             _statusBadge(status),
+
             const SizedBox(width: 10),
+
             if (updatedAt.isNotEmpty)
               Expanded(
                 child: Text(
@@ -418,6 +462,7 @@ class _TenantHomeState extends State<TenantHome> {
 
         if (note.isNotEmpty) ...[
           const SizedBox(height: 10),
+
           Text(
             note,
             style: const TextStyle(
@@ -440,7 +485,8 @@ class _TenantHomeState extends State<TenantHome> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius:
+            BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
             blurRadius: 18,
@@ -453,21 +499,29 @@ class _TenantHomeState extends State<TenantHome> {
         children: [
           InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius:
+                BorderRadius.circular(20),
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding:
+                  const EdgeInsets.all(20),
               child: Row(
                 children: [
                   Container(
                     width: 42,
                     height: 42,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
-                      borderRadius: BorderRadius.circular(12),
+                    decoration:
+                        BoxDecoration(
+                      color:
+                          const Color(0xFFF3F4F6),
+                      borderRadius:
+                          BorderRadius.circular(
+                        12,
+                      ),
                     ),
                     child: Icon(
                       icon,
-                      color: const Color(0xFF374151),
+                      color:
+                          const Color(0xFF374151),
                     ),
                   ),
 
@@ -478,7 +532,8 @@ class _TenantHomeState extends State<TenantHome> {
                       title,
                       style: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w800,
+                        fontWeight:
+                            FontWeight.w800,
                         letterSpacing: 0.3,
                       ),
                     ),
@@ -486,9 +541,12 @@ class _TenantHomeState extends State<TenantHome> {
 
                   Icon(
                     expanded
-                        ? Icons.keyboard_arrow_up
-                        : Icons.keyboard_arrow_down,
-                    color: const Color(0xFF6B7280),
+                        ? Icons
+                            .keyboard_arrow_up
+                        : Icons
+                            .keyboard_arrow_down,
+                    color:
+                        const Color(0xFF6B7280),
                   ),
                 ],
               ),
@@ -497,7 +555,8 @@ class _TenantHomeState extends State<TenantHome> {
 
           if (expanded)
             Padding(
-              padding: const EdgeInsets.fromLTRB(
+              padding:
+                  const EdgeInsets.fromLTRB(
                 20,
                 0,
                 20,
@@ -548,7 +607,8 @@ class _TenantHomeState extends State<TenantHome> {
       ),
       decoration: BoxDecoration(
         color: _statusBackground(status),
-        borderRadius: BorderRadius.circular(30),
+        borderRadius:
+            BorderRadius.circular(30),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -558,7 +618,9 @@ class _TenantHomeState extends State<TenantHome> {
             size: small ? 13 : 15,
             color: _statusColor(status),
           ),
+
           const SizedBox(width: 4),
+
           Text(
             label,
             style: TextStyle(
@@ -615,12 +677,70 @@ class _TenantHomeState extends State<TenantHome> {
       return '0';
     }
 
-    final value = double.tryParse(amount.toString()) ?? 0;
+    final value =
+        double.tryParse(amount.toString()) ?? 0;
 
     if (value == value.roundToDouble()) {
       return value.toInt().toString();
     }
 
     return value.toStringAsFixed(2);
+  }
+
+  // -------------------------
+  // LOGOUT
+  // -------------------------
+
+  Future<void> _logout() async {
+    final shouldLogout =
+        await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Logout'),
+          content: const Text(
+            'Are you sure you want to logout?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  false,
+                );
+              },
+              child: const Text('CANCEL'),
+            ),
+
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  true,
+                );
+              },
+              child: const Text('LOGOUT'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldLogout != true) {
+      return;
+    }
+
+    await SessionService.logout();
+
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            const LoginScreen(),
+      ),
+      (route) => false,
+    );
   }
 }
