@@ -9,7 +9,21 @@ import (
 	"rent_backend/data"
 )
 
+type LoginRequest struct {
+	Phone    string `json:"phone"`
+	Password string `json:"password"`
+}
+
+type LoginResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Role    string `json:"role"`
+	Name    string `json:"name"`
+}
+
 func main() {
+	http.HandleFunc("/api/auth/login", login)
+
 	http.HandleFunc("/api/tenant/dashboard", tenantDashboard)
 
 	http.HandleFunc("/api/landlord/payment", updatePayment)
@@ -37,6 +51,71 @@ func enableCORS(w http.ResponseWriter) {
 	)
 }
 
+func login(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(
+			w,
+			"Method not allowed",
+			http.StatusMethodNotAllowed,
+		)
+		return
+	}
+
+	var request LoginRequest
+
+	err := json.NewDecoder(r.Body).Decode(&request)
+
+	if err != nil {
+		http.Error(
+			w,
+			"Invalid login data",
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	var response LoginResponse
+
+	switch {
+	case request.Phone == "9876543210" &&
+		request.Password == "123456":
+
+		response = LoginResponse{
+			Success: true,
+			Message: "Login successful",
+			Role:    "landlord",
+			Name:    "Amit",
+		}
+
+	case request.Phone == "9123456789" &&
+		request.Password == "123456":
+
+		response = LoginResponse{
+			Success: true,
+			Message: "Login successful",
+			Role:    "tenant",
+			Name:    data.TenantData.Name,
+		}
+
+	default:
+		response = LoginResponse{
+			Success: false,
+			Message: "Invalid phone number or password",
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	json.NewEncoder(w).Encode(response)
+}
+
 func tenantDashboard(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
 
@@ -59,7 +138,11 @@ func updatePayment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(
+			w,
+			"Method not allowed",
+			http.StatusMethodNotAllowed,
+		)
 		return
 	}
 
@@ -68,37 +151,54 @@ func updatePayment(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&payment)
 
 	if err != nil {
-		http.Error(w, "Invalid payment data", http.StatusBadRequest)
+		http.Error(
+			w,
+			"Invalid payment data",
+			http.StatusBadRequest,
+		)
 		return
 	}
 
-	payment.Total = payment.Rent + payment.Electricity
+	payment.Total =
+		payment.Rent +
+			payment.Electricity
 
 	found := false
 
 	for i := range data.TenantData.Payments {
-		if data.TenantData.Payments[i].Month == payment.Month &&
-			data.TenantData.Payments[i].Year == payment.Year {
+		if data.TenantData.Payments[i].Month ==
+			payment.Month &&
+			data.TenantData.Payments[i].Year ==
+				payment.Year {
 
-			data.TenantData.Payments[i] = payment
+			data.TenantData.Payments[i] =
+				payment
+
 			found = true
 			break
 		}
 	}
 
 	if !found {
-		data.TenantData.Payments = append(
-			[]data.Payment{payment},
-			data.TenantData.Payments...,
-		)
+		data.TenantData.Payments =
+			append(
+				[]data.Payment{payment},
+				data.TenantData.Payments...,
+			)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(
+		"Content-Type",
+		"application/json",
+	)
 
 	json.NewEncoder(w).Encode(payment)
 }
 
-func updateElectricity(w http.ResponseWriter, r *http.Request) {
+func updateElectricity(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
 	enableCORS(w)
 
 	if r.Method == http.MethodOptions {
@@ -107,7 +207,11 @@ func updateElectricity(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method != http.MethodPut {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(
+			w,
+			"Method not allowed",
+			http.StatusMethodNotAllowed,
+		)
 		return
 	}
 
@@ -116,36 +220,51 @@ func updateElectricity(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&appliance)
 
 	if err != nil {
-		http.Error(w, "Invalid appliance data", http.StatusBadRequest)
+		http.Error(
+			w,
+			"Invalid appliance data",
+			http.StatusBadRequest,
+		)
 		return
 	}
 
-	appliance.UpdatedAt = time.Now().Format("02 January 2006")
+	appliance.UpdatedAt =
+		time.Now().Format("02 January 2006")
 
 	found := false
 
 	for i := range data.TenantData.Appliances {
-		if data.TenantData.Appliances[i].Name == appliance.Name {
+		if data.TenantData.Appliances[i].Name ==
+			appliance.Name {
 
-			data.TenantData.Appliances[i] = appliance
+			data.TenantData.Appliances[i] =
+				appliance
+
 			found = true
 			break
 		}
 	}
 
 	if !found {
-		data.TenantData.Appliances = append(
-			data.TenantData.Appliances,
-			appliance,
-		)
+		data.TenantData.Appliances =
+			append(
+				data.TenantData.Appliances,
+				appliance,
+			)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(
+		"Content-Type",
+		"application/json",
+	)
 
 	json.NewEncoder(w).Encode(appliance)
 }
 
-func updateWater(w http.ResponseWriter, r *http.Request) {
+func updateWater(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
 	enableCORS(w)
 
 	if r.Method == http.MethodOptions {
@@ -154,7 +273,11 @@ func updateWater(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method != http.MethodPut {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(
+			w,
+			"Method not allowed",
+			http.StatusMethodNotAllowed,
+		)
 		return
 	}
 
@@ -163,15 +286,23 @@ func updateWater(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&water)
 
 	if err != nil {
-		http.Error(w, "Invalid water data", http.StatusBadRequest)
+		http.Error(
+			w,
+			"Invalid water data",
+			http.StatusBadRequest,
+		)
 		return
 	}
 
-	water.UpdatedAt = time.Now().Format("02 January 2006")
+	water.UpdatedAt =
+		time.Now().Format("02 January 2006")
 
 	data.TenantData.Water = water
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(
+		"Content-Type",
+		"application/json",
+	)
 
 	json.NewEncoder(w).Encode(water)
 }

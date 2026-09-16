@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'screens/auth/login_screen.dart';
 import 'screens/landlord/landlord_home.dart';
+import 'screens/tenant/tenant_home.dart';
 import 'services/api_service.dart';
+import 'services/session_service.dart';
 
 void main() {
   runApp(const RentApp());
@@ -19,68 +22,130 @@ class RentApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'Arial',
       ),
-      home: const AppLoader(),
+      home: const StartupScreen(),
     );
   }
 }
 
-class AppLoader extends StatefulWidget {
-  const AppLoader({super.key});
+class StartupScreen extends StatefulWidget {
+  const StartupScreen({super.key});
 
   @override
-  State<AppLoader> createState() => _AppLoaderState();
+  State<StartupScreen> createState() => _StartupScreenState();
 }
 
-class _AppLoaderState extends State<AppLoader> {
-  late Future<Map<String, dynamic>> dashboard;
+class _StartupScreenState extends State<StartupScreen> {
+  String? errorMessage;
 
   @override
   void initState() {
     super.initState();
+    _checkSession();
+  }
 
-    dashboard =
-        ApiService.getTenantDashboard();
+  Future<void> _checkSession() async {
+    try {
+      final isLoggedIn = await SessionService.isLoggedIn();
+
+      if (!isLoggedIn) {
+        _goToLogin();
+        return;
+      }
+
+      final role = await SessionService.getRole();
+
+      if (role == 'landlord') {
+        final data = await ApiService.getTenantDashboard();
+
+        if (!mounted) return;
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => LandlordHome(data: data),
+          ),
+        );
+      } else if (role == 'tenant') {
+        final data = await ApiService.getTenantDashboard();
+
+        if (!mounted) return;
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => TenantHome(data: data),
+          ),
+        );
+      } else {
+        await SessionService.logout();
+        _goToLogin();
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        errorMessage = 'Unable to restore your session.';
+      });
+    }
+  }
+
+  void _goToLogin() {
+    if (!mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LoginScreen(),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, dynamic>>(
-      future: dashboard,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState ==
-            ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return Scaffold(
-            body: Center(
-              child: Text(
-                'Error:\n${snapshot.error}',
-                textAlign: TextAlign.center,
+    if (errorMessage != null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 50,
               ),
-            ),
-          );
-        }
-
-        if (!snapshot.hasData) {
-          return const Scaffold(
-            body: Center(
-              child: Text(
-                'No data available',
+              const SizedBox(height: 16),
+              Text(
+                errorMessage!,
+                style: const TextStyle(fontSize: 16),
               ),
-            ),
-          );
-        }
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    errorMessage = null;
+                  });
 
-        return LandlordHome(
-          data: snapshot.data!,
-        );
-      },
+                  _checkSession();
+                },
+                child: const Text('Retry'),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () async {
+                  await SessionService.logout();
+                  _goToLogin();
+                },
+                child: const Text('Go to Login'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
     );
   }
 }
